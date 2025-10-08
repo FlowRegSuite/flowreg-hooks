@@ -1,0 +1,94 @@
+# ---- FlowRegSuite meta hooks (single repo for consumers) ----
+
+# PyPI-safe README images (your custom fixer)
+- id: check-readme-images
+  name: Check README has absolute image URLs (PyPI compatible)
+  entry: check-readme-images
+  language: python
+  files: ^README\.(md|rst)$
+  pass_filenames: true
+  stages: [pre-commit, manual]
+
+# Ruff lint (with fixes) — keep before formatter
+- id: fr-ruff
+  name: Ruff (lint + fix)
+  language: python
+  entry: ruff check
+  args: ["--fix", "--exit-non-zero-on-fix"]
+  types_or: [python]
+  additional_dependencies: ["ruff==0.8.0"]
+
+# Ruff format
+- id: fr-ruff-format
+  name: Ruff formatter
+  language: python
+  entry: ruff format
+  types_or: [python]
+  additional_dependencies: ["ruff==0.8.0"]
+
+# NumPy docstring semantics
+- id: fr-numpydoc-validation
+  name: NumPy docstring validation
+  language: python
+  entry: python -m numpydoc.hooks.validate_docstrings
+  types_or: [python]
+  additional_dependencies: ["numpydoc==1.8.0"]
+  exclude: ^(tests/|examples/|experiments/|notebooks/)
+
+# validate pyproject.toml
+- id: fr-validate-pyproject
+  name: validate-pyproject
+  language: python
+  entry: validate-pyproject
+  files: ^pyproject\.toml$
+  additional_dependencies: ["validate-pyproject==0.23"]
+
+# Standard housekeeping from pre-commit-hooks (wrapped)
+- id: fr-trailing-whitespace
+  name: trailing-whitespace
+  language: python
+  entry: python -m pre_commit_hooks.trailing_whitespace_fixer
+  types: [text]
+  additional_dependencies: ["pre-commit-hooks==5.0.0"]
+
+- id: fr-end-of-file-fixer
+  name: end-of-file-fixer
+  language: python
+  entry: python -m pre_commit_hooks.end_of_file_fixer
+  types: [text]
+  additional_dependencies: ["pre-commit-hooks==5.0.0"]
+
+- id: fr-check-yaml
+  name: check-yaml
+  language: python
+  entry: python -m pre_commit_hooks.check_yaml
+  types: [yaml]
+  additional_dependencies: ["pre-commit-hooks==5.0.0"]
+
+- id: fr-check-toml
+  name: check-toml
+  language: python
+  entry: python -m pre_commit_hooks.check_toml
+  types: [toml]
+  additional_dependencies: ["pre-commit-hooks==5.0.0"]
+
+- id: fr-check-merge-conflict
+  name: check-merge-conflict
+  language: python
+  entry: python -m pre_commit_hooks.check_merge_conflict
+  additional_dependencies: ["pre-commit-hooks==5.0.0"]
+
+- id: fr-debug-statements
+  name: debug-statements
+  language: python
+  entry: python -m pre_commit_hooks.debug_statement_hook
+  types: [python]
+  additional_dependencies: ["pre-commit-hooks==5.0.0"]
+
+- id: fr-mixed-line-ending
+  name: mixed-line-ending
+  language: python
+  entry: python -m pre_commit_hooks.mixed_line_ending
+  args: ["--fix=lf"]
+  types: [text]
+  additional_dependencies: ["pre-commit-hooks==5.0.0"]

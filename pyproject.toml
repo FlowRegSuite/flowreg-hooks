@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flowreg-hooks"
+version = "1.0.0"
+description = "Pre-commit meta hooks for FlowRegSuite (Ruff, NumPy docstrings, pyproject validation, README image normalization)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "pre-commit>=3.8",
+  "build>=1.2",
+  "twine>=5.1",
+]
+ruff = ["ruff==0.8.0"]
+numpydoc = ["numpydoc==1.8.0"]
+pcmh = ["pre-commit-hooks==5.0.0"]
+validate = ["validate-pyproject==0.23"]
+
+[project.scripts]
+check-readme-images = "flowreg_hooks.check_readme_images:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
