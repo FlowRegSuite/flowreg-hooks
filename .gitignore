@@ -84,7 +84,7 @@ _skbuild
 *.egg-info
 /CLAUDE.md
 
-src/pyflowreg/_version.py
+src/flowreg_hooks/_version.py
 
 jupiter_demo/*
 docs/_build/*

@@ -9,7 +9,6 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".svg"}
@@ -179,7 +178,7 @@ def process_file(
         return False
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """Main entry point for check-readme-images hook.
 
     Args:

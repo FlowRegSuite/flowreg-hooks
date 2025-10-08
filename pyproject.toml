@@ -1,21 +1,41 @@
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=80", "wheel", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "flowreg-hooks"
-version = "1.0.0"
+dynamic = ["version"]
 description = "Pre-commit meta hooks for FlowRegSuite (Ruff, NumPy docstrings, pyproject validation, README image normalization)"
 readme = "README.md"
-requires-python = ">=3.9"
-license = { text = "MIT" }
+authors = [
+    { name="Philipp Flotho", email="Philipp.Flotho@uni-saarland.de" }
+]
+license = { text = "CC BY-NC-SA 4.0" }
+requires-python = ">=3.10"
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
 dependencies = []
 
 [project.optional-dependencies]
 dev = [
-  "pre-commit>=3.8",
-  "build>=1.2",
-  "twine>=5.1",
+    "pre-commit>=3.8",
+    "build>=1.2",
+    "twine>=5.1",
+]
+test = [
+    "pytest>=8.0.0",
 ]
 ruff = ["ruff==0.8.0"]
 numpydoc = ["numpydoc==1.8.0"]
@@ -27,3 +47,8 @@ check-readme-images = "flowreg_hooks.check_readme_images:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools_scm]
+version_file = "src/flowreg_hooks/_version.py"
+version_scheme = "no-guess-dev"
+local_scheme = "no-local-version"

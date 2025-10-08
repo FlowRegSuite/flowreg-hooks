@@ -182,9 +182,9 @@ pre-commit autoupdate
 
 ## Requirements
 
-- Python ≥ 3.9
+- Python ≥ 3.10
 - Git repository with GitHub remote (for `check-readme-images`)
 
 ## License
 
-MIT
+CC BY-NC-SA 4.0

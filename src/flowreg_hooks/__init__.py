@@ -1,3 +1,8 @@
 """Pre-commit hooks for FlowRegSuite."""
 
-__version__ = "1.0.0"
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("flowreg-hooks")
+except PackageNotFoundError:
+    __version__ = "unknown"
