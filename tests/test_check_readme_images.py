@@ -1,8 +1,9 @@
 """Tests for flowreg_hooks.check_readme_images."""
 
+import subprocess
 import pytest
 
-from flowreg_hooks.check_readme_images import main, normalize_image_urls, process_file
+from flowreg_hooks.check_readme_images import get_git_info, main, normalize_image_urls, process_file
 
 BASE = "https://raw.githubusercontent.com/owner/repo/sha/"
 
@@ -80,3 +81,78 @@ def test_main_exit_codes(monkeypatch, tmp_path):
     # Check-only on normalized file should return 0 (no changes needed)
     rc = main([str(readme), "--check-only"])
     assert rc == 0
+
+
+def test_get_git_info_no_commits(tmp_path, monkeypatch):
+    """Test get_git_info() when there are no commits yet (initial commit scenario)."""
+    # Create a fresh git repo with no commits
+    monkeypatch.chdir(tmp_path)
+    subprocess.run(["git", "init"], check=True)
+    subprocess.run(["git", "remote", "add", "origin", "https://github.com/owner/repo.git"], check=True)
+
+    # Should return None gracefully when no HEAD exists
+    result = get_git_info()
+    assert result is None
+
+
+def test_get_git_info_no_origin(tmp_path, monkeypatch):
+    """Test get_git_info() when there's no origin remote configured."""
+    # Create a git repo with commits but no origin
+    monkeypatch.chdir(tmp_path)
+    subprocess.run(["git", "init"], check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], check=True)
+
+    # Create a commit
+    readme = tmp_path / "README.md"
+    readme.write_text("# Test", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], check=True)
+    subprocess.run(["git", "commit", "-m", "Initial commit"], check=True)
+
+    # Should return None gracefully when no origin exists
+    result = get_git_info()
+    assert result is None
+
+
+def test_get_git_info_non_github_remote(tmp_path, monkeypatch):
+    """Test get_git_info() when remote is not a GitHub URL."""
+    # Create a git repo with a non-GitHub remote
+    monkeypatch.chdir(tmp_path)
+    subprocess.run(["git", "init"], check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], check=True)
+
+    # Create a commit
+    readme = tmp_path / "README.md"
+    readme.write_text("# Test", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], check=True)
+    subprocess.run(["git", "commit", "-m", "Initial commit"], check=True)
+
+    # Add a non-GitHub remote
+    subprocess.run(["git", "remote", "add", "origin", "https://gitlab.com/owner/repo.git"], check=True)
+
+    # Should return None gracefully for non-GitHub remotes
+    result = get_git_info()
+    assert result is None
+
+
+def test_main_with_no_origin(tmp_path, monkeypatch):
+    """Test that main() fails gracefully when no origin is configured."""
+    # Create a git repo with no origin
+    monkeypatch.chdir(tmp_path)
+    subprocess.run(["git", "init"], check=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], check=True)
+
+    # Create README with relative image
+    readme = tmp_path / "README.md"
+    readme.write_text("![alt](img/test.png)", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], check=True)
+    subprocess.run(["git", "commit", "-m", "Initial commit"], check=True)
+
+    # Should skip processing gracefully and return 0
+    rc = main([str(readme)])
+    assert rc == 0
+
+    # File should remain unchanged
+    assert readme.read_text(encoding="utf-8") == "![alt](img/test.png)"
