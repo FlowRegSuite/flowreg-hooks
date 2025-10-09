@@ -14,47 +14,51 @@ from pathlib import Path
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".svg"}
 
 
-def get_git_info() -> tuple[str, str]:
+def get_git_info() -> tuple[str, str] | None:
     """Get GitHub repository info from git remote.
 
     Returns:
-        tuple: (owner/repo, current commit SHA)
-
-    Raises:
-        RuntimeError: If git commands fail or remote URL is invalid
+        tuple: (owner/repo, current commit SHA) or None if not a valid GitHub repo
     """
-    try:
-        # Get remote URL
-        result = subprocess.run(
-            ["git", "config", "--get", "remote.origin.url"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        remote_url = result.stdout.strip()
+    # Get remote URL (check=False to handle missing origin gracefully)
+    result = subprocess.run(
+        ["git", "config", "--get", "remote.origin.url"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
-        # Parse owner/repo from various GitHub URL formats
-        # https://github.com/owner/repo.git
-        # git@github.com:owner/repo.git
-        match = re.search(r"github\.com[:/](.+?)(?:\.git)?$", remote_url)
-        if not match:
-            raise RuntimeError(f"Could not parse GitHub repo from remote URL: {remote_url}")
+    if result.returncode != 0:
+        # No origin remote configured
+        return None
 
-        repo_path = match.group(1)
+    remote_url = result.stdout.strip()
 
-        # Get current commit SHA (default ref)
-        result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        commit_sha = result.stdout.strip()
+    # Parse owner/repo from various GitHub URL formats
+    # https://github.com/owner/repo.git
+    # git@github.com:owner/repo.git
+    match = re.search(r"github\.com[:/](.+?)(?:\.git)?$", remote_url)
+    if not match:
+        # Not a GitHub repository
+        return None
 
-        return repo_path, commit_sha
+    repo_path = match.group(1)
 
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Git command failed: {e}") from e
+    # Get current commit SHA (default ref)
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    if result.returncode != 0:
+        # No commits yet (initial repository state)
+        return None
+
+    commit_sha = result.stdout.strip()
+
+    return repo_path, commit_sha
 
 
 def normalize_image_urls(
@@ -209,12 +213,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     # Get repository info
-    try:
-        repo_path, default_ref = get_git_info()
-    except RuntimeError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        print("This hook requires a GitHub repository with a configured origin remote.", file=sys.stderr)
-        return 1
+    git_info = get_git_info()
+    if git_info is None:
+        # Skip processing if not a GitHub repo or no commits yet
+        # This is not an error - just skip the hook
+        return 0
+
+    repo_path, default_ref = git_info
 
     # Use specified ref or default to current commit
     ref = args.ref if args.ref else default_ref
