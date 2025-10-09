@@ -157,7 +157,9 @@ def process_file(
         return False
 
     try:
-        original_content = filepath.read_text(encoding="utf-8")
+        # Read with newline='' to preserve original line endings (LF, CRLF, or mixed)
+        with open(filepath, "r", encoding="utf-8", newline="") as f:
+            original_content = f.read()
     except Exception as e:
         print(f"Error reading {filepath}: {e}", file=sys.stderr)
         return False
@@ -172,9 +174,10 @@ def process_file(
         print(f"{filepath}: Image URLs need normalization (use without --check-only to fix)")
         return True
 
-    # Write changes
+    # Write changes with newline='' to preserve original line endings
     try:
-        filepath.write_text(normalized_content, encoding="utf-8")
+        with open(filepath, "w", encoding="utf-8", newline="") as f:
+            f.write(normalized_content)
         print(f"{filepath}: Normalized image URLs")
         return True
     except Exception as e:
