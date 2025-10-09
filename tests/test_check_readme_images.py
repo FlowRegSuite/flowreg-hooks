@@ -156,3 +156,58 @@ def test_main_with_no_origin(tmp_path, monkeypatch):
 
     # File should remain unchanged
     assert readme.read_text(encoding="utf-8") == "![alt](img/test.png)"
+
+
+def test_preserve_line_endings_lf(tmp_path):
+    """Test that process_file preserves LF (Unix) line endings."""
+    p = tmp_path / "README.md"
+    # Create content with LF line endings
+    content_with_lf = "# Title\n\n![a](img/x.png)\n\nSome text\n"
+    # Write with newline='' to preserve exact line endings
+    p.write_bytes(content_with_lf.encode("utf-8"))
+
+    # Verify we have LF line endings
+    raw_content = p.read_bytes()
+    assert b"\r\n" not in raw_content
+    assert b"\n" in raw_content
+
+    # Process the file
+    changed = process_file(p, BASE, check_only=False)
+    assert changed
+
+    # Read the raw bytes to check line endings
+    result_bytes = p.read_bytes()
+
+    # Should still have LF line endings, not CRLF
+    assert b"\r\n" not in result_bytes, "File should not have CRLF line endings after processing"
+    assert b"\n" in result_bytes, "File should still have LF line endings"
+
+    # Verify content was actually changed
+    result_text = result_bytes.decode("utf-8")
+    assert BASE + "img/x.png" in result_text
+
+
+def test_preserve_line_endings_crlf(tmp_path):
+    """Test that process_file preserves CRLF (Windows) line endings."""
+    p = tmp_path / "README.md"
+    # Create content with CRLF line endings
+    content_with_crlf = "# Title\r\n\r\n![a](img/x.png)\r\n\r\nSome text\r\n"
+    p.write_bytes(content_with_crlf.encode("utf-8"))
+
+    # Verify we have CRLF line endings
+    raw_content = p.read_bytes()
+    assert b"\r\n" in raw_content
+
+    # Process the file
+    changed = process_file(p, BASE, check_only=False)
+    assert changed
+
+    # Read the raw bytes to check line endings
+    result_bytes = p.read_bytes()
+
+    # Should still have CRLF line endings
+    assert b"\r\n" in result_bytes, "File should still have CRLF line endings after processing"
+
+    # Verify content was actually changed
+    result_text = result_bytes.decode("utf-8")
+    assert BASE + "img/x.png" in result_text
